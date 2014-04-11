@@ -5,6 +5,8 @@
 
   var cur_video_blob = null;
   var fb_instance;
+  var chat_room_id;
+  var currentUser;
 
   $(document).ready(function(){
     connect_to_chat_firebase();
@@ -13,7 +15,7 @@
 
   function connect_to_chat_firebase(){
     /* Include your Firebase link here!*/
-    fb_instance = new Firebase("https://gsroth-p3-v1.firebaseio.com");
+    fb_instance = new Firebase("https://pick-meyers-1.firebaseio.com");
 
     // generate new chatroom id or use existing id
     var url_segments = document.location.href.split("/#");
@@ -25,6 +27,7 @@
     display_msg({m:"Share this url with your friend to join this chat: "+ document.location.origin+"/#"+fb_chat_room_id,c:"red"})
 
     // set up variables to access firebase data structure
+    chat_room_id = fb_chat_room_id;
     var fb_new_chat_room = fb_instance.child('chatrooms').child(fb_chat_room_id);
     var fb_instance_users = fb_new_chat_room.child('users');
     var fb_instance_stream = fb_new_chat_room.child('stream');
@@ -43,16 +46,17 @@
     if(!username){
       username = "anonymous"+Math.floor(Math.random()*1111);
     }
-    fb_instance_users.push({ name: username,c: my_color});
+
+    currentUser = fb_instance_users.push({ name: username,c: my_color});
     $("#waiting").remove();
 
     // bind submission box
     $("#submission input").keydown(function( event ) {
       if (event.which == 13) {
         if(has_emotions($(this).val())){
-          fb_instance_stream.push({m:username+": " +$(this).val(), v:cur_video_blob, c: my_color});
+          fb_instance_stream.push({m:username+": " +$(this).val(), v:cur_video_blob, c: my_color, user:currentUser.name(), profile:cur_video_blob});
         }else{
-          fb_instance_stream.push({m:username+": " +$(this).val(), c: my_color});
+          fb_instance_stream.push({m:username+": " +$(this).val(), c: my_color, user:currentUser.name(), profile:cur_video_blob});
         }
         $(this).val("");
         scroll_to_bottom(0);
@@ -65,7 +69,13 @@
 
   // creates a message node and appends it to the conversation
   function display_msg(data){
-    $("#conversation").append("<div class='msg' style='color:"+data.c+"'>"+data.m+"</div>");
+    var profilePicString = "";
+
+    if (data.profile){
+      profilePicString = "<video width='120' src='"+URL.createObjectURL(base64_to_blob(data.profile))+"'></video>";
+    }
+
+    $("#conversation").append("<div class='msg' style='color:"+data.c+"'>"+profilePicString+data.m+"</div>");
     if(data.v){
       // for video element
       var video = document.createElement("video");
@@ -138,6 +148,7 @@
       mediaRecorder.video_width = video_width/2;
       mediaRecorder.video_height = video_height/2;
 
+      var isFirstBlob = true;
       mediaRecorder.ondataavailable = function (blob) {
           //console.log("new data available!");
           video_container.innerHTML = "";
@@ -145,12 +156,17 @@
           // convert data into base 64 blocks
           blob_to_base64(blob,function(b64_data){
             cur_video_blob = b64_data;
+            if (isFirstBlob){
+              currentUser.update({profile: cur_video_blob});
+              isFirstBlob = false;
+            }
           });
       };
       setInterval( function() {
         mediaRecorder.stop();
         mediaRecorder.start(3000);
       }, 3000 );
+      
       console.log("connect to media stream!");
     }
 
