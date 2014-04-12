@@ -38,7 +38,7 @@
       display_msg({m:snapshot.val().name+" joined the room",c: snapshot.val().c});
     });
     fb_instance_stream.on("child_added",function(snapshot){
-      display_msg(snapshot.val());
+      display_msg(snapshot.val(), snapshot.name());
     });
 
     // block until username is answered
@@ -51,14 +51,43 @@
     $("#waiting").remove();
 
     // bind submission box
-    $("#submission input").keydown(function( event ) {
-      if (event.which == 13) {
-        if(has_emotions($(this).val())){
-          fb_instance_stream.push({m:username+": " +$(this).val(), v:cur_video_blob, c: my_color, user:currentUser.name(), profile:cur_video_blob});
-        }else{
-          fb_instance_stream.push({m:username+": " +$(this).val(), c: my_color, user:currentUser.name(), profile:cur_video_blob});
-        }
-        $(this).val("");
+
+    var emojis = [];
+    $(document).keydown(function( event ) {
+      if (event.which == 13 && !$("#submission input").prop('disabled')) {
+        // if(has_emotions($(this).val())){
+          // fb_instance_stream.push({m:username+": " +$(this).val(), v:cur_video_blob, c: my_color, user:currentUser.name(), profile:cur_video_blob});
+        // }else{
+        // Firebase.goOffline();
+        // var msgID = (fb_instance_stream.push({m:username+": " +$("#submission input").val(), c: my_color, user:currentUser.name(), profile:cur_video_blob})).name();
+        // }
+        // $(this).val("");
+        // scroll_to_bottom(0);
+        $("#submission input").prop('disabled', true);
+        $("#emojiList").html("Emojis: ");
+
+        $("#textInput").mouseup(function ( event ){
+          t = (document.all) ? document.selection.createRange().text : document.getSelection();
+          // document.getElementById('input').value = t;
+          console.log(t.toString());
+          // console.log(t.getRangeAt(0).startOffset);
+          // console.log(t.getRangeAt(0).endOffset);
+
+          // if(t.getRangeAt(0).startOffset != t.getRangeAt(0).endOffset) fb_instance_videos.push({mID:msgID, s:t.getRangeAt(0).startOffset, e:t.getRangeAt(0).endOffset})
+          if (t.toString()){
+            $("#emojiList").append(t.toString()+" ");
+            emojis.push({str: t.toString(), video: cur_video_blob});
+            // record video!!!
+          }
+        });
+      } else if (event.which == 13 && $("#submission input").prop('disabled')){
+        // Firebase.goOnline();
+        fb_instance_stream.push({username:username, m:$("#submission input").val(), c: my_color, user:currentUser.name(), profile:cur_video_blob, emojis: emojis});
+        emojis = [];
+        $("#submission input").prop('disabled', false);
+        $("#textInput").unbind('mouseup');
+        $("#submission input").val("");
+        $("#emojiList").html("");
         scroll_to_bottom(0);
       }
     });
@@ -68,14 +97,39 @@
   }
 
   // creates a message node and appends it to the conversation
-  function display_msg(data){
+  function display_msg(data, msgID){
     var profilePicString = "";
 
     if (data.profile){
       profilePicString = "<video width='120' src='"+URL.createObjectURL(base64_to_blob(data.profile))+"'></video>";
     }
 
-    $("#conversation").append("<div class='msg' style='color:"+data.c+"'>"+profilePicString+data.m+"</div>");
+    var convertString = function(message, emojis){
+      if (emojis && message){
+        for (var elem in emojis){
+          var emoji = emojis[elem];
+          if (emoji.video){
+            var index = message.indexOf(emoji.str);
+            if (index != -1){
+              var leftM = message.substring(0, index);
+              var rightM = message.substring(index+emoji.str.length, message.length);
+
+              return convertString(leftM, emojis)+"<b>"+emoji.str+"</b>"+convertString(rightM, emojis);
+            }
+          }
+        }
+      }
+
+      return message;
+    }
+
+    var convertedMessageString = convertString(data.m, data.emojis);
+    console.log("Converted String: "+convertedMessageString);
+
+    if (data.username) $("#conversation").append("<div class='msg' style='color:"+data.c+"'>"+profilePicString+data.username+": "+convertedMessageString+"</div>");
+    else $("#conversation").append("<div class='msg' style='color:"+data.c+"'>"+data.m+"</div>");
+    
+
     if(data.v){
       // for video element
       var video = document.createElement("video");
@@ -148,7 +202,7 @@
       mediaRecorder.video_width = video_width/2;
       mediaRecorder.video_height = video_height/2;
 
-      var isFirstBlob = true;
+      // var isFirstBlob = true;
       mediaRecorder.ondataavailable = function (blob) {
           //console.log("new data available!");
           video_container.innerHTML = "";
@@ -156,16 +210,16 @@
           // convert data into base 64 blocks
           blob_to_base64(blob,function(b64_data){
             cur_video_blob = b64_data;
-            if (isFirstBlob){
-              currentUser.update({profile: cur_video_blob});
-              isFirstBlob = false;
-            }
+            // if (isFirstBlob){
+              // if(!currentUser.profile)currentUser.update({profile: cur_video_blob});
+              // isFirstBlob = false;
+            // }
           });
       };
       setInterval( function() {
         mediaRecorder.stop();
-        mediaRecorder.start(3000);
-      }, 3000 );
+        mediaRecorder.start(1000);
+      }, 1000 );
       
       console.log("connect to media stream!");
     }
