@@ -69,15 +69,14 @@
         $("#textInput").mouseup(function ( event ){
           t = (document.all) ? document.selection.createRange().text : document.getSelection();
           // document.getElementById('input').value = t;
-          console.log(t.toString());
           // console.log(t.getRangeAt(0).startOffset);
           // console.log(t.getRangeAt(0).endOffset);
 
           // if(t.getRangeAt(0).startOffset != t.getRangeAt(0).endOffset) fb_instance_videos.push({mID:msgID, s:t.getRangeAt(0).startOffset, e:t.getRangeAt(0).endOffset})
-          if (t.toString()){
-            $("#emojiList").append(t.toString()+" ");
-            emojis.push({str: t.toString(), video: cur_video_blob});
-            // record video!!!
+          if (t.toString() && isNewEmoji(t.toString(), emojis) && cur_video_blob){
+            var emojiColor = "#"+((1<<24)*Math.random()|0).toString(16);
+            var location = emojis.push({str: t.toString(), video: cur_video_blob, color:emojiColor });
+            $("#emojiList").append("<span class='emojiInList' name="+location+" style='color:"+emojiColor+"'>"+t.toString()+"<video width='120' src='"+URL.createObjectURL(base64_to_blob(cur_video_blob))+"' autoplay loop></video></span>&nbsp;");
           }
         });
       } else if (event.which == 13 && $("#submission input").prop('disabled')){
@@ -94,6 +93,15 @@
 
     // scroll to bottom in case there is already content
     scroll_to_bottom(1300);
+  }
+
+  function isNewEmoji(newEmoji, emojis){
+    for (var index in emojis){
+      var emoji = emojis[index];
+      if (emoji.str == newEmoji) return false;
+    }
+
+    return true;
   }
 
   // creates a message node and appends it to the conversation
@@ -114,7 +122,7 @@
               var leftM = message.substring(0, index);
               var rightM = message.substring(index+emoji.str.length, message.length);
 
-              return convertString(leftM, emojis)+"<b>"+emoji.str+"</b>"+convertString(rightM, emojis);
+              return convertString(leftM, emojis)+"<span class='hoverShow' style='color:"+emoji.color+"'><b>"+emoji.str+"</b><video width='100' src='"+URL.createObjectURL(base64_to_blob(emoji.video))+"' autoplay loop hidden></video></span>"+convertString(rightM, emojis);
             }
           }
         }
@@ -129,6 +137,13 @@
     if (data.username) $("#conversation").append("<div class='msg' style='color:"+data.c+"'>"+profilePicString+data.username+": "+convertedMessageString+"</div>");
     else $("#conversation").append("<div class='msg' style='color:"+data.c+"'>"+data.m+"</div>");
     
+    $(".hoverShow").mouseenter(function(){
+      $(this).children('video').show("fast");
+    });
+
+    $(".hoverShow").mouseleave(function(){
+      $(this).children('video').hide("fast");
+    });
 
     if(data.v){
       // for video element
@@ -269,5 +284,4 @@
     var blob = new Blob([view]);
     return blob;
   };
-
 })();
