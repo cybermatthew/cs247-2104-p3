@@ -65,6 +65,8 @@
         // scroll_to_bottom(0);
         $("#submission input").prop('disabled', true);
         $("#emojiList").html("Emojis: ");
+        if(cur_video_blob) $("#instructions").html("Highlight words in your message to attach video emojis!");
+        else $("#instructions").html("Turn on your camera and highlight words in your message to attach video emojis!  Then press enter to submit the message.");
 
         $("#textInput").mouseup(function ( event ){
           t = (document.all) ? document.selection.createRange().text : document.getSelection();
@@ -80,13 +82,13 @@
           }
         });
       } else if (event.which == 13 && $("#submission input").prop('disabled')){
-        // Firebase.goOnline();
         fb_instance_stream.push({username:username, m:$("#submission input").val(), c: my_color, user:currentUser.name(), profile:cur_video_blob, emojis: emojis});
         emojis = [];
         $("#submission input").prop('disabled', false);
         $("#textInput").unbind('mouseup');
         $("#submission input").val("");
         $("#emojiList").html("");
+        $("#instructions").html("");
         scroll_to_bottom(0);
       }
     });
