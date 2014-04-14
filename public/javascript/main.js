@@ -7,11 +7,24 @@
   var fb_instance;
   var chat_room_id;
   var currentUser;
+  var mediaRecorder;
 
   $(document).ready(function(){
     connect_to_chat_firebase();
     connect_webcam();
   });
+
+  var numRecording = 0;
+
+  function recordVideo(incrementRecording){
+    if (mediaRecorder){
+      if(incrementRecording){
+        numRecording++;
+        $("#recordLabel").html("<b>RECORDING (WAIT TO HIGHLIGHT MORE EMOJIS)</b>");
+      }
+      mediaRecorder.start(1000);
+    }
+  }
 
   function connect_to_chat_firebase(){
     /* Include your Firebase link here!*/
@@ -53,6 +66,7 @@
     // bind submission box
 
     var emojis = [];
+    var firstKey = true;
     $(document).keydown(function( event ) {
       if (event.which == 13 && !$("#submission input").prop('disabled')) {
         // if(has_emotions($(this).val())){
@@ -64,32 +78,63 @@
         // $(this).val("");
         // scroll_to_bottom(0);
         $("#submission input").prop('disabled', true);
-        $("#emojiList").html("Emojis: ");
+        $("#emojiList").html("Emojis: <table><tr id='emojiTable'></tr></table>");
         if(cur_video_blob) $("#instructions").html("Highlight words in your message to attach video emojis!");
-        else $("#instructions").html("Turn on your camera and highlight words in your message to attach video emojis!  Then press enter to submit the message.");
+        else $("#instructions").html("Turn on your camera and highlight words in your message to attach video emojis!  Click on an emoji to re-record.  Then press enter to submit the message.");
 
         $("#textInput").mouseup(function ( event ){
+          if (numRecording > 0) return;
           t = (document.all) ? document.selection.createRange().text : document.getSelection();
+          var selectedText = t.toString();
           // document.getElementById('input').value = t;
           // console.log(t.getRangeAt(0).startOffset);
           // console.log(t.getRangeAt(0).endOffset);
 
           // if(t.getRangeAt(0).startOffset != t.getRangeAt(0).endOffset) fb_instance_videos.push({mID:msgID, s:t.getRangeAt(0).startOffset, e:t.getRangeAt(0).endOffset})
-          if (t.toString() && isNewEmoji(t.toString(), emojis) && cur_video_blob){
+          if (selectedText && isNewEmoji(selectedText, emojis) && mediaRecorder){
             var emojiColor = "#"+((1<<24)*Math.random()|0).toString(16);
-            var location = emojis.push({str: t.toString(), video: cur_video_blob, color:emojiColor });
-            $("#emojiList").append("<span class='emojiInList' name="+location+" style='color:"+emojiColor+"'>"+t.toString()+"<video width='120' src='"+URL.createObjectURL(base64_to_blob(cur_video_blob))+"' autoplay loop></video></span>&nbsp;");
+
+            recordVideo(true);
+
+            setTimeout(function(){
+              numRecording--;
+              if(numRecording == 0) $("#recordLabel").html("");
+              var location = emojis.push({str: selectedText, video: cur_video_blob, color:emojiColor });
+              $("#emojiTable").append("<td><span class='emojiInList' name="+(location-1)+" style='color:"+emojiColor+"'><center>"+selectedText+"</center><br><video width='120' src='"+URL.createObjectURL(base64_to_blob(cur_video_blob))+"' autoplay loop></video></span></td>");
+
+              // $(".emojiInList").hover(function(){$(this).children('video').show("fast");}, function(){$(this).children('video').hide("fast");});
+              $(".emojiInList").click(function(){
+                // console.log($(this).attr('name'));
+                recordVideo(true);
+                var clickedObj = $(this);
+
+                setTimeout(function(){
+                  numRecording--;
+                  if(numRecording == 0) $("#recordLabel").html("");
+                  emojis[parseInt(clickedObj.attr('name'))].video = cur_video_blob;
+                  clickedObj.children('video').attr('src', URL.createObjectURL(base64_to_blob(cur_video_blob)));
+                }, 1500);
+              });
+
+            }, 1500);
           }
         });
       } else if (event.which == 13 && $("#submission input").prop('disabled')){
-        fb_instance_stream.push({username:username, m:$("#submission input").val(), c: my_color, user:currentUser.name(), profile:cur_video_blob, emojis: emojis});
+        fb_instance_stream.push({username:username, m:$("#submission input").val(), c: my_color, user:currentUser.name(), profile:profileVideo, emojis: emojis});
         emojis = [];
         $("#submission input").prop('disabled', false);
         $("#textInput").unbind('mouseup');
         $("#submission input").val("");
         $("#emojiList").html("");
         $("#instructions").html("");
+        firstKey = true;
         scroll_to_bottom(0);
+      } else if (firstKey){
+        recordVideo();
+        firstKey = false;
+        setTimeout(function(){
+          profileVideo = cur_video_blob;
+        }, 1500);
       }
     });
 
@@ -139,13 +184,15 @@
     if (data.username) $("#conversation").append("<div class='msg' style='color:"+data.c+"'>"+profilePicString+data.username+": "+convertedMessageString+"</div>");
     else $("#conversation").append("<div class='msg' style='color:"+data.c+"'>"+data.m+"</div>");
     
-    $(".hoverShow").mouseenter(function(){
-      $(this).children('video').show("fast");
-    });
+    $(".hoverShow").hover(function(){$(this).children('video').show("fast");}, function(){$(this).children('video').hide("fast");});
 
-    $(".hoverShow").mouseleave(function(){
-      $(this).children('video').hide("fast");
-    });
+    // $(".hoverShow").mouseenter(function(){
+    //   $(this).children('video').show("fast");
+    // });
+
+    // $(".hoverShow").mouseleave(function(){
+    //   $(this).children('video').hide("fast");
+    // });
 
     if(data.v){
       // for video element
@@ -210,7 +257,7 @@
 
       // now record stream in 5 seconds interval
       var video_container = document.getElementById('video_container');
-      var mediaRecorder = new MediaStreamRecorder(stream);
+      mediaRecorder = new MediaStreamRecorder(stream);
       var index = 1;
 
       mediaRecorder.mimeType = 'video/webm';
@@ -233,10 +280,10 @@
             // }
           });
       };
-      setInterval( function() {
-        mediaRecorder.stop();
-        mediaRecorder.start(1000);
-      }, 1000 );
+      // setInterval( function() {
+      //   mediaRecorder.stop();
+      //   mediaRecorder.start(1000);
+      // }, 1000 );
       
       console.log("connect to media stream!");
     }
