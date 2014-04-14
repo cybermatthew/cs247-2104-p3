@@ -87,3 +87,6 @@ button {
   vertical-align: middle;
   text-shadow: 1px 1px 0px #ffffff;
 }
+.tdEmojiInList:hover {
+  background-color: lightgray;
+}

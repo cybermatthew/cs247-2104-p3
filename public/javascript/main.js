@@ -52,20 +52,23 @@
           numRecording--;
           if(numRecording == 0) $("#recordLabel").html("");
           var location = emojis.push({str: selectedText, video: cur_video_blob, color:emojiColor });
-          $("#emojiTable").append("<td><span class='emojiInList' name="+(location-1)+" style='color:"+emojiColor+"'><center>"+selectedText+"</center><br><video width='120' src='"+URL.createObjectURL(base64_to_blob(cur_video_blob))+"' autoplay loop></video></span></td>");
+          $("#emojiTable").append("<td class='tdEmojiInList'><span class='emojiInList' name="+(location-1)+" style='color:"+emojiColor+"'><center>"+selectedText+"</center><br><video width='120' src='"+URL.createObjectURL(base64_to_blob(cur_video_blob))+"' autoplay loop></video></span></td>");
 
           // $(".emojiInList").hover(function(){$(this).children('video').show("fast");}, function(){$(this).children('video').hide("fast");});
           $(".emojiInList").click(function(){
             // console.log($(this).attr('name'));
-            recordVideo(true);
-            var clickedObj = $(this);
-
-            setTimeout(function(){
-              numRecording--;
-              if(numRecording == 0) $("#recordLabel").html("");
-              emojis[parseInt(clickedObj.attr('name'))].video = cur_video_blob;
-              clickedObj.children('video').attr('src', URL.createObjectURL(base64_to_blob(cur_video_blob)));
-            }, 1500);
+            if (numRecording == 0){
+              recordVideo(true);
+              var clickedObj = $(this);
+              clickedObj.parent('td').css('background-color', 'lightgray');
+              setTimeout(function(){
+                clickedObj.parent('td').css('background-color', '');
+                numRecording--;
+                if(numRecording == 0) $("#recordLabel").html("");
+                emojis[parseInt(clickedObj.attr('name'))].video = cur_video_blob;
+                clickedObj.children('video').attr('src', URL.createObjectURL(base64_to_blob(cur_video_blob)));
+              }, 1500);
+            }
           });
 
         }, 1500);
