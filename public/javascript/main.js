@@ -9,6 +9,7 @@
   var currentUser;
   var mediaRecorder;
   var emojis = [];
+  var profileVideo;
 
   $(document).ready(function(){
     connect_to_chat_firebase();
@@ -16,6 +17,7 @@
   });
 
   var numRecording = 0;
+  var firstKey = true;
 
   function recordVideo(incrementRecording){
     if (mediaRecorder){
@@ -129,68 +131,17 @@
     // bind submission box
 
     $("#submit").click(function(){
-      if($(this).text() == "Highlight Emojis"){
+      if($(this).text() == "Highlight Emojis" && $("#submission input").val() != "" ){
         startHighlighting();
       }
-      else{
+      else if($(this).text() == "Send Message"){
         sendMessage(fb_instance_stream, username, my_color);
       }
     });
 
-    var firstKey = true;
     $(document).keydown(function( event ) {
-      if (event.which == 13 && !$("#submission input").prop('disabled')) {
+      if (event.which == 13 && !$("#submission input").prop('disabled') && $("#submission input").val() != "" ) {
         startHighlighting();
-        // if(has_emotions($(this).val())){
-          // fb_instance_stream.push({m:username+": " +$(this).val(), v:cur_video_blob, c: my_color, user:currentUser.name(), profile:cur_video_blob});
-        // }else{
-        // Firebase.goOffline();
-        // var msgID = (fb_instance_stream.push({m:username+": " +$("#submission input").val(), c: my_color, user:currentUser.name(), profile:cur_video_blob})).name();
-        // }
-        // $(this).val("");
-        // scroll_to_bottom(0);
-        // $("#submission input").prop('disabled', true);
-        // $("#emojiList").html("Emojis: <table><tr id='emojiTable'></tr></table>");
-        // if(cur_video_blob) $("#instructions").html("Highlight words in your message to attach video emojis!");
-        // else $("#instructions").html("Turn on your camera and highlight words in your message to attach video emojis!  Click on an emoji to re-record.  Then press enter to submit the message.");
-
-        // $("#textInput").mouseup(function ( event ){
-        //   if (numRecording > 0) return;
-        //   t = (document.all) ? document.selection.createRange().text : document.getSelection();
-        //   var selectedText = t.toString();
-        //   // document.getElementById('input').value = t;
-        //   // console.log(t.getRangeAt(0).startOffset);
-        //   // console.log(t.getRangeAt(0).endOffset);
-
-        //   // if(t.getRangeAt(0).startOffset != t.getRangeAt(0).endOffset) fb_instance_videos.push({mID:msgID, s:t.getRangeAt(0).startOffset, e:t.getRangeAt(0).endOffset})
-        //   if (selectedText && isNewEmoji(selectedText, emojis) && mediaRecorder){
-        //     var emojiColor = "#"+((1<<24)*Math.random()|0).toString(16);
-
-        //     recordVideo(true);
-
-        //     setTimeout(function(){
-        //       numRecording--;
-        //       if(numRecording == 0) $("#recordLabel").html("");
-        //       var location = emojis.push({str: selectedText, video: cur_video_blob, color:emojiColor });
-        //       $("#emojiTable").append("<td><span class='emojiInList' name="+(location-1)+" style='color:"+emojiColor+"'><center>"+selectedText+"</center><br><video width='120' src='"+URL.createObjectURL(base64_to_blob(cur_video_blob))+"' autoplay loop></video></span></td>");
-
-        //       // $(".emojiInList").hover(function(){$(this).children('video').show("fast");}, function(){$(this).children('video').hide("fast");});
-        //       $(".emojiInList").click(function(){
-        //         // console.log($(this).attr('name'));
-        //         recordVideo(true);
-        //         var clickedObj = $(this);
-
-        //         setTimeout(function(){
-        //           numRecording--;
-        //           if(numRecording == 0) $("#recordLabel").html("");
-        //           emojis[parseInt(clickedObj.attr('name'))].video = cur_video_blob;
-        //           clickedObj.children('video').attr('src', URL.createObjectURL(base64_to_blob(cur_video_blob)));
-        //         }, 1500);
-        //       });
-
-        //     }, 1500);
-        //   }
-        // });
       } else if (event.which == 13 && $("#submission input").prop('disabled')){
         sendMessage(fb_instance_stream, username, my_color);
       } else if (firstKey){
