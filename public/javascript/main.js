@@ -40,11 +40,6 @@
       if (numRecording > 0) return;
       t = (document.all) ? document.selection.createRange().text : document.getSelection();
       var selectedText = t.toString();
-      // document.getElementById('input').value = t;
-      // console.log(t.getRangeAt(0).startOffset);
-      // console.log(t.getRangeAt(0).endOffset);
-
-      // if(t.getRangeAt(0).startOffset != t.getRangeAt(0).endOffset) fb_instance_videos.push({mID:msgID, s:t.getRangeAt(0).startOffset, e:t.getRangeAt(0).endOffset})
       if (selectedText && isNewEmoji(selectedText, emojis) && mediaRecorder){
         var emojiColor = "#"+((1<<24)*Math.random()|0).toString(16);
 
@@ -56,9 +51,7 @@
           var location = emojis.push({str: selectedText, video: cur_video_blob, color:emojiColor });
           $("#emojiTable").append("<td class='tdEmojiInList'><span class='emojiInList' name="+(location-1)+" style='color:"+emojiColor+"'><center>"+selectedText+"</center><br><video width='120' src='"+URL.createObjectURL(base64_to_blob(cur_video_blob))+"' autoplay loop></video></span></td>");
 
-          // $(".emojiInList").hover(function(){$(this).children('video').show("fast");}, function(){$(this).children('video').hide("fast");});
           $(".emojiInList").click(function(){
-            // console.log($(this).attr('name'));
             if (numRecording == 0){
               recordVideo(true);
               var clickedObj = $(this);
@@ -201,14 +194,6 @@
     
     $(".hoverShow").hover(function(){$(this).children('video').show("fast");}, function(){$(this).children('video').hide("fast");});
 
-    // $(".hoverShow").mouseenter(function(){
-    //   $(this).children('video').show("fast");
-    // });
-
-    // $(".hoverShow").mouseleave(function(){
-    //   $(this).children('video').hide("fast");
-    // });
-
     if(data.v){
       // for video element
       var video = document.createElement("video");
@@ -289,16 +274,8 @@
           // convert data into base 64 blocks
           blob_to_base64(blob,function(b64_data){
             cur_video_blob = b64_data;
-            // if (isFirstBlob){
-              // if(!currentUser.profile)currentUser.update({profile: cur_video_blob});
-              // isFirstBlob = false;
-            // }
           });
       };
-      // setInterval( function() {
-      //   mediaRecorder.stop();
-      //   mediaRecorder.start(1000);
-      // }, 1000 );
       
       console.log("connect to media stream!");
     }
