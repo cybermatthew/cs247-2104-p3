@@ -23,7 +23,7 @@
     if (mediaRecorder){
       if(incrementRecording){
         numRecording++;
-        $("#recordLabel").html("<b>RECORDING (WAIT TO HIGHLIGHT MORE EMOJIS)</b>");
+        $("#recordLabel").html("<b>RECORDING (WAIT TO HIGHLIGHT MORE EMOTICONS)</b>");
       }
       mediaRecorder.start(1000);
     }
@@ -32,9 +32,9 @@
   function startHighlighting(){
     $("#submit").text("Send Message");
     $("#submission input").prop('disabled', true);
-    $("#emojiList").html("Emojis: <table><tr id='emojiTable'></tr></table>");
-    if(cur_video_blob) $("#instructions").html("Highlight words in your message to attach video emojis!");
-    else $("#instructions").html("Turn on your camera and highlight words in your message to attach video emojis!  Click on an emoji to re-record.  Then press enter to submit the message.");
+    $("#emojiList").html("Emoticons: <table><tr id='emojiTable'></tr></table>");
+    if(cur_video_blob) $("#instructions").html("Highlight words in your message to attach video emoticon!  Click on a video emoticon to re-record.");
+    else $("#instructions").html("Turn on your camera and highlight words in your message to attach video emoticon!  Click on a video emoticon to re-record.");
 
     $("#textInput").mouseup(function ( event ){
       if (numRecording > 0) return;
@@ -144,7 +144,7 @@
         startHighlighting();
       } else if (event.which == 13 && $("#submission input").prop('disabled')){
         sendMessage(fb_instance_stream, username, my_color);
-      } else if (firstKey){
+      } else if (firstKey || !profileVideo){
         recordVideo();
         firstKey = false;
         setTimeout(function(){
